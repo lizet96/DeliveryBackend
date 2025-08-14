@@ -39,9 +39,33 @@ io.on('connection', (socket) => {
     socket.join(`user-${userId}`);
   });
   
-  socket.on('location-update', (data) => {
-    // Broadcast a todos los admins
-    socket.broadcast.emit('location-received', data);
+  socket.on('location-update', async (data) => {
+    console.log('📍 Ubicación recibida:', data);
+    
+    try {
+      // Guardar en la base de datos
+      const { data: savedLocation, error } = await supabase
+        .from('delivery_locations')
+        .insert({
+          delivery_user_id: data.userId,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          timestamp: data.timestamp
+        })
+        .select();
+      
+      if (error) {
+        console.error('❌ Error guardando ubicación:', error);
+      } else {
+        console.log('✅ Ubicación guardada en BD:', savedLocation);
+      }
+      
+      // Broadcast a todos los admins
+      socket.broadcast.emit('location-received', data);
+      
+    } catch (error) {
+      console.error('❌ Error procesando ubicación:', error);
+    }
   });
   
   socket.on('disconnect', () => {
@@ -57,29 +81,29 @@ async function testDatabaseConnection() {
       .select('count', { count: 'exact', head: true });
     
     if (error) {
-      console.log('❌ Error conectando a Supabase:', error.message);
+      console.log(' Error conectando a Supabase:', error.message);
       return false;
     }
     
-    console.log('✅ Conexión a Supabase exitosa!');
-    console.log(`📊 Base de datos configurada correctamente`);
+    console.log(' Conexión a Supabase exitosa!');
+    console.log(` Base de datos configurada correctamente`);
     return true;
   } catch (error) {
-    console.log('❌ Error de conexión:', error.message);
+    console.log(' Error de conexión:', error.message);
     return false;
   }
 }
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, async () => {
-  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
-  console.log(`🌐 Frontend URL: http://localhost:4200`);
-  console.log(`🔗 Backend URL: http://localhost:${PORT}`);
+  console.log(` Servidor corriendo en puerto ${PORT}`);
+  console.log(` Frontend URL: http://localhost:4200`);
+  console.log(` Backend URL: http://localhost:${PORT}`);
   
   // Verificar conexión a base de datos
   await testDatabaseConnection();
   
-  console.log('\n📋 Rutas disponibles:');
+  console.log('\n Rutas disponibles:');
   console.log('   POST /api/auth/login');
   console.log('   GET  /api/users');
   console.log('   GET  /api/locations');
