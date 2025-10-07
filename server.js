@@ -16,13 +16,24 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:4200",
+    origin: [
+      "http://localhost:4200",
+      "https://delivery-frontend-785966913469.us-central1.run.app",
+      "https://frontend-785966913469.us-central1.run.app"  // ← Agregar esta línea
+    ],
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:4200",
+    "https://delivery-frontend-785966913469.us-central1.run.app",
+    "https://frontend-785966913469.us-central1.run.app"  // ← Agregar esta línea también
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
